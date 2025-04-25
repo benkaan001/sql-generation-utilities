@@ -1,5 +1,7 @@
 # SQL Generation Utilities
 
+[![CI Pipeline](https://github.com/benkaan001/sql-generation-utilities/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/benkaan001/sql-generation-utilities/actions/workflows/ci.yml)
+
 This repository contains Python scripts designed to automate the generation of SQL code based on input lists or predefined templates. These tools aim to improve consistency and efficiency in development workflows involving repetitive SQL tasks.
 
 These scripts are adapted from real-world automation tasks, using anonymized sample data.
@@ -20,7 +22,7 @@ This was originally created to help enforce consistency and ensure developers in
 ### Functionality
 
 * Reads a list of `SCHEMA.TABLE` names from an input text file.
-* Handles variations in input format (e.g., leading commas, whitespace).
+* Handles variations in input format (e.g., leading commas, whitespace, comments starting with `#`).
 * For each valid table entry, it creates a `.sql` file named after the table (e.g., `TCUSTOMER_MASTER.sql`).
 * Populates each file with a predefined BTEQ skeleton template, inserting the specific schema and table name where appropriate.
 
@@ -47,13 +49,15 @@ This command reads table names from `sample_data/sample_bteq_table_list.txt` and
 
 ### Input File Format (`sample_data/sample_bteq_table_list.txt`)
 
-A plain text file with one table per line in `SCHEMA.TABLE` format. Leading commas and whitespace are handled.
+A plain text file with one table per line in `SCHEMA.TABLE` format. Leading commas, whitespace, and lines starting with `#` (or parts of lines after `#`) are ignored.
 
 ```
 FINANCE_DW.TGL_ACCOUNT_DIM
-,FINANCE_DW.TGL_JOURNAL_ENTRY_FACT
-,SALES_MART.TCUSTOMER_MASTER
-...
+,FINANCE_DW.TGL_JOURNAL_ENTRY_FACT # With comment
+SALES_MART.TCUSTOMER_MASTER
+# This is a full line comment
+,HR_RAW.TEMPL_PROFILE_CURRENT
+ANOTHER_SCHEMA.ANOTHER_TABLE
 
 ```
 
@@ -139,6 +143,7 @@ INSERT INTO config_db.optimization_tasks (
 
 -- (Additional INSERT statements follow)
 
+
 ```
 
 ## General Setup
@@ -160,13 +165,29 @@ INSERT INTO config_db.optimization_tasks (
    .\.venv\Scripts\activate
 
    ```
-3. Install dependencies:
-   (Currently, these scripts primarily use standard Python libraries. If dependencies are added later, update requirements.txt)
+3. **Install dependencies:**
    ```
-   # If requirements.txt is updated:
-   # pip install -r requirements.txt
+   pip install -r requirements.txt
 
    ```
+
+## Testing
+
+Unit tests are included to verify the core logic of the scripts, such as parsing input files and generating the expected SQL statement structures.
+
+To run the tests locally:
+
+1. Ensure you have installed the dependencies (`pip install -r requirements.txt`).
+2. Navigate to the root directory of the repository.
+3. Run `pytest`:
+   ```
+   pytest
+
+   ```
+
+   All tests should pass.
+
+A Continuous Integration (CI) workflow is set up using GitHub Actions (`.github/workflows/ci.yml`). This workflow automatically runs the linter (`flake8`) and the unit tests (`pytest`) on pushes and pull requests to the main branch, ensuring code quality and correctness.
 
 ## Sample Data
 
