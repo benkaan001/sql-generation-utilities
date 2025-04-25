@@ -65,7 +65,7 @@ DATABASE {schema};
 
 def parse_table_list(file_path: str) -> List[Tuple[str, str]]:
     """
-    Reads the input file and parses schema.table names.
+    Reads the input file and parses schema.table names, handling comments.
 
     Args:
         file_path: Path to the input text file.
@@ -81,21 +81,28 @@ def parse_table_list(file_path: str) -> List[Tuple[str, str]]:
 
     try:
         with open(file_path, 'r') as f:
-            for line in f:
-                cleaned_line = line.strip().lstrip(',') # Remove whitespace and potential leading comma
-                if not cleaned_line:
-                    continue # Skip empty lines
+            for line_num, line in enumerate(f, 1):
+                # Remove comments starting with # first
+                line_no_comment = line.split('#', 1)[0]
+                cleaned_line = line_no_comment.strip().lstrip(',') # Remove whitespace and potential leading comma
 
-                if '.' not in cleaned_line:
-                    print(f"Warning: Skipping invalid line (missing '.'): {line.strip()}", file=sys.stderr)
+                if not cleaned_line:
+                    continue # Skip empty or comment-only lines
+
+                # Basic validation for format: must contain exactly one '.' and parts must not be empty
+                if cleaned_line.count('.') != 1:
+                    print(f"Warning: Skipping invalid line {line_num} (invalid '.' count): {line.strip()}", file=sys.stderr)
                     continue
 
                 parts = cleaned_line.split('.', 1)
-                if len(parts) == 2 and parts[0] and parts[1]:
-                    schema, table_name = parts
-                    tables.append((schema.strip(), table_name.strip()))
+                schema = parts[0].strip()
+                table_name = parts[1].strip()
+
+                # Ensure schema and table name are not empty after stripping
+                if schema and table_name:
+                    tables.append((schema, table_name))
                 else:
-                     print(f"Warning: Skipping invalid line (format error): {line.strip()}", file=sys.stderr)
+                     print(f"Warning: Skipping invalid line {line_num} (empty schema or table): {line.strip()}", file=sys.stderr)
 
     except IOError as e:
         print(f"Error: Could not read file {file_path}. Details: {e}", file=sys.stderr)
@@ -165,7 +172,7 @@ def main():
     table_list = parse_table_list(args.input)
     if not table_list:
         print("No valid tables found in the input file. Exiting.", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(1) # Exit if no tables parsed
 
     print(f"Found {len(table_list)} tables. Generating SQL skeletons in {args.output_dir}...")
 
